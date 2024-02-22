@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dictionary</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+
+        #search-container {
+            margin-bottom: 20px;
+        }
+
+        #result-container {
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Word Definition Search</h1>
+
+    <div id="search-container">
+        <label for="wordInput">Enter a word: </label>
+        <input type="text" id="wordInput" placeholder="Type a word">
+        <button onclick="searchWord()">Search</button>
+    </div>
+    <div id="load"></div>
+    <div id="result-container">
+        <h2>Definition</h2>
+        <div id="definition"></div>
+        <h2>Part of Speech</h2>
+        <div id="partOfSpeech"></div>
+    </div>
+
+    <script>
+        function searchWord() {
+            // Reset previous results
+            document.getElementById("load").innerHTML="Loading"
+            document.getElementById("result-container").style.display = "none";
+            document.getElementById("definition").innerHTML = "";
+            document.getElementById("partOfSpeech").innerHTML = "";
+           
+
+            // Get the entered word from the input box
+            const word = document.getElementById("wordInput").value.trim();
+            
+
+            // Input validation: Check if the word contains only alphabets
+            if (!/^[a-zA-Z]+$/.test(word)) {
+                alert("Please enter a valid word containing only alphabets.");
+                return;
+            }
+            
+
+            // Make API call with the entered word
+            fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Handle API response and display data
+                    if (data && data.length > 0) {
+                        const firstEntry = data[0];
+                        const meanings = firstEntry.meanings;
+                        document.getElementById("load").innerHTML=""
+
+                        // Display the primary definition and part of speech
+                        document.getElementById("definition").innerHTML = meanings[0].definitions[0].definition;
+                        document.getElementById("partOfSpeech").innerHTML = meanings[0].partOfSpeech;
+
+                        // Display additional meanings if available
+                        if (meanings.length > 1) {
+                            for (let i = 1; i < Math.min(4, meanings.length); i++) {
+                                const additionalMeaning = meanings[i];
+                                const additionalDefinition = additionalMeaning.definitions[0].definition;
+                                const additionalPartOfSpeech = additionalMeaning.partOfSpeech;
+
+                                const meaningContainer = document.createElement("div");
+                                meaningContainer.innerHTML = `<strong>Meaning ${i + 1}:</strong><br>${additionalDefinition}<br><em>Part of Speech:</em> ${additionalPartOfSpeech}`;
+                                document.getElementById("result-container").appendChild(meaningContainer);
+                            }
+                        }
+
+                        // Show the result container
+                        document.getElementById("result-container").style.display = "block";
+                    } else {
+                        alert("No definitions found for the entered word.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching data:", error);
+                    alert("An error occurred while fetching data. Please try again later.");
+                });
+        }
+    </script>
+</body>
+</html>
